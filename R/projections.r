@@ -2,6 +2,8 @@
 
 library(tidyverse)
 library(lubridate)
+library(arm)
+library(INLA)
 
 raw.csv <- "https://raw.githubusercontent.com/Nexo-Dados/pesquisas-presidenciais-2022/main/pesquisas_1t.csv"
 
@@ -10,7 +12,7 @@ dados <- read_csv(file = raw.csv)
 library(INLA)
 
 data.ini <- min(dados$Data, na.rm = T)
-data.last <- max(dados$Data, na.rm = T)+1 
+data.last <- max(dados$Data, na.rm = T) 
 data.fim <- ymd("2022-10-02")
 
 # Adicionando linhas ao banco até a data da eleicao
@@ -21,7 +23,7 @@ dados.div <- dados %>%
   # # filter(!is.na(`Data divulgação`)) %>% 
   # filter(`Data divulgação`>= "2022-08-01") %>% 
   bind_rows(
-    tibble(Data = seq(from = data.last, to = data.fim, by = "day"))
+    tibble(Data = seq(from = data.last+1, to = data.fim, by = "day"))
   ) %>% 
   # Passo para o inla
   left_join(
@@ -49,26 +51,26 @@ gg.0 <- dados.div %>%
              color = Candidato,
              fill = Candidato)) +
   geom_point() +
-  geom_smooth() + 
   theme_bw()
 
-gg.0
+# gg.0
 
-library(arm)
 
-# Lula
+
 dados.inla <- dados.div %>% 
   # select(Time, Data, Lula:BNI) %>% 
   mutate_at(.vars = c("Lula", "Bolsonaro",
                       "Ciro", "Tebet", 
                       "Outros", "BNI"), .funs = function(x) logit(x/100))
 
+
 pred.id <- which(is.na(dados.div$Lula))
-
-
+MM <- length(pred.id)
 
 M = 1000
+
 formula <- Y ~ 1 + f(Time, model = "rw2")
+
 
 # Lula
 
@@ -81,18 +83,19 @@ m.Lula <- inla(formula, family = "gaussian",
                control.compute = list(config = TRUE))
 
 
-pred.Lula <- m.Lula$summary.linear.predictor[pred.id, c(4,3,5)] %>% 
+pred.Lula <- m.Lula$summary.linear.predictor[ , c(4,3,5)] %>% 
   invlogit() %>% 
   bind_cols(
-    Data = dados.div$Data[pred.id], 
+    Data = dados.div$Data, 
     Candidato = "Lula" )
 
 teste <- inla.posterior.sample(m.Lula, n = M)
 
-Election.Lula <- map(.x = teste, .f = function(x) x$latent[pred.id,][10] %>% invlogit()) %>% 
+Election.Lula <- map(.x = teste, .f = function(x) x$latent[pred.id,][MM] %>% invlogit()) %>% 
   bind_rows() %>%  
   bind_cols(
     Candidato = "Lula" )
+
 
 # Bolsonaro
 
@@ -105,15 +108,15 @@ m.Bolsonaro <- inla(formula, family = "gaussian",
                control.compute = list(config = TRUE))
 
 
-pred.Bolsonaro <- m.Bolsonaro$summary.linear.predictor[pred.id, c(4,3,5)] %>% 
+pred.Bolsonaro <- m.Bolsonaro$summary.linear.predictor[ , c(4,3,5)] %>% 
   invlogit() %>% 
   bind_cols(
-    Data = dados.div$Data[pred.id], 
+    Data = dados.div$Data, 
     Candidato = "Bolsonaro" )
 
 teste <- inla.posterior.sample(m.Bolsonaro, n = M)
 
-Election.Bolsonaro <- map(.x = teste, .f = function(x) x$latent[pred.id,][10] %>% invlogit()) %>% 
+Election.Bolsonaro <- map(.x = teste, .f = function(x) x$latent[pred.id,][MM] %>% invlogit()) %>% 
   bind_rows() %>%  
   bind_cols(
     Candidato = "Bolsonaro" )
@@ -130,15 +133,15 @@ m.Ciro <- inla(formula, family = "gaussian",
                control.compute = list(config = TRUE))
 
 
-pred.Ciro <- m.Ciro$summary.linear.predictor[pred.id, c(4,3,5)] %>% 
+pred.Ciro <- m.Ciro$summary.linear.predictor[ , c(4,3,5)] %>% 
   invlogit() %>% 
   bind_cols(
-    Data = dados.div$Data[pred.id], 
+    Data = dados.div$Data, 
     Candidato = "Ciro" )
 
 teste <- inla.posterior.sample(m.Ciro, n = M)
 
-Election.Ciro <- map(.x = teste, .f = function(x) x$latent[pred.id,][10] %>% invlogit()) %>% 
+Election.Ciro <- map(.x = teste, .f = function(x) x$latent[pred.id,][MM] %>% invlogit()) %>% 
   bind_rows() %>%  
   bind_cols(
     Candidato = "Ciro" )
@@ -155,15 +158,15 @@ m.Tebet <- inla(formula, family = "gaussian",
                control.compute = list(config = TRUE))
 
 
-pred.Tebet <- m.Tebet$summary.linear.predictor[pred.id, c(4,3,5)] %>% 
+pred.Tebet <- m.Tebet$summary.linear.predictor[ , c(4,3,5)] %>% 
   invlogit() %>% 
   bind_cols(
-    Data = dados.div$Data[pred.id], 
+    Data = dados.div$Data, 
     Candidato = "Tebet" )
 
 teste <- inla.posterior.sample(m.Tebet, n = M)
 
-Election.Tebet <- map(.x = teste, .f = function(x) x$latent[pred.id,][10] %>% invlogit()) %>% 
+Election.Tebet <- map(.x = teste, .f = function(x) x$latent[pred.id,][MM] %>% invlogit()) %>% 
   bind_rows() %>%  
   bind_cols(
     Candidato = "Tebet" )
@@ -180,15 +183,15 @@ m.Outros <- inla(formula, family = "gaussian",
                control.compute = list(config = TRUE))
 
 
-pred.Outros <- m.Outros$summary.linear.predictor[pred.id, c(4,3,5)] %>% 
+pred.Outros <- m.Outros$summary.linear.predictor[ , c(4,3,5)] %>% 
   invlogit() %>% 
   bind_cols(
-    Data = dados.div$Data[pred.id], 
+    Data = dados.div$Data, 
     Candidato = "Outros" )
 
 teste <- inla.posterior.sample(m.Outros, n = M)
 
-Election.Outros <- map(.x = teste, .f = function(x) x$latent[pred.id,][10] %>% invlogit()) %>% 
+Election.Outros <- map(.x = teste, .f = function(x) x$latent[pred.id,][MM] %>% invlogit()) %>% 
   bind_rows() %>%  
   bind_cols(
     Candidato = "Outros" )
@@ -205,15 +208,15 @@ m.BNI <- inla(formula, family = "gaussian",
                control.compute = list(config = TRUE))
 
 
-pred.BNI <- m.BNI$summary.linear.predictor[pred.id, c(4,3,5)] %>% 
+pred.BNI <- m.BNI$summary.linear.predictor[ , c(4,3,5)] %>% 
   invlogit() %>% 
   bind_cols(
-    Data = dados.div$Data[pred.id], 
+    Data = dados.div$Data, 
     Candidato = "BNI" )
 
 teste <- inla.posterior.sample(m.BNI, n = M)
 
-Election.BNI <- map(.x = teste, .f = function(x) x$latent[pred.id,][10] %>% invlogit()) %>% 
+Election.BNI <- map(.x = teste, .f = function(x) x$latent[pred.id,][MM] %>% invlogit()) %>% 
   bind_rows() %>%  
   bind_cols(
     Candidato = "BNI" )
@@ -221,7 +224,8 @@ Election.BNI <- map(.x = teste, .f = function(x) x$latent[pred.id,][10] %>% invl
 
 ########################
 
-pred.cand <- bind_rows(pred.Lula, pred.Bolsonaro, pred.Ciro, pred.Tebet, pred.Outros, pred.BNI)
+pred.cand <- bind_rows(pred.Lula, pred.Bolsonaro, pred.Ciro, 
+                       pred.Tebet, pred.Outros, pred.BNI)
 
 gg.0 +
   geom_line(data = pred.cand %>% 
@@ -241,22 +245,49 @@ gg.0 +
                           ymin = `0.025quant`,
                           ymax = `0.975quant`,
                           fill = Candidato), 
-            color = NA, alpha = .25)
+            color = NA, alpha = .25) +
+  labs(
+    y = "Proporção de eleitores"
+  )
 
 
-Election.cand <- bind_rows(Election.Lula, Election.Bolsonaro, Election.Ciro, Election.Tebet, Election.Outros) %>% 
-  add_column(Seq = rep(1:M,5))
+Election.cand <- bind_rows(Election.Lula, Election.Bolsonaro, Election.Ciro, 
+                           Election.Tebet, Election.Outros, Election.BNI) %>% 
+  add_column(Seq = rep(1:M,6)) %>% 
+  mutate(
+    Candidato = factor(Candidato, 
+                       levels = c("Lula", "Bolsonaro",
+                                  "Ciro", "Tebet", 
+                                  "Outros", "BNI"),
+                       ordered = T)
+  ) 
 
+names(Election.cand)[1] <- "Predictor"
 
-Election.cand %>% 
+Election.cand.validos <- Election.cand %>% 
   group_by(Seq) %>% 
   mutate(
-    `Predictor:136` = `Predictor:136` / sum(`Predictor:136`)
+    Predictor = Predictor / sum(Predictor)
   ) %>% ungroup() %>%
+  filter(Candidato != "BNI") %>% 
+  group_by(Seq) %>% 
+  mutate(
+    Predictor2 = Predictor / sum(Predictor)
+  ) %>% ungroup() 
+
+Election.cand.validos %>%
+  ggplot(aes(x = Predictor, fill = Candidato, color=Candidato) ) +
+  geom_density(alpha = 0.3) + 
+  geom_vline(xintercept = 0.5, linetype = "dashed") + 
+  theme_bw() 
+
+  
+  
+Election.cand.validos %>%
   group_by(Candidato) %>% 
   summarise(
-    Prop = mean(`Predictor:136`),
-    LI = quantile(`Predictor:136`, probs = 0.025),
-    LS = quantile(`Predictor:136`, probs = 0.975),
-    Prob_win = mean(`Predictor:136` > 0.5)
+    Prop = median(Predictor),
+    LI = quantile(Predictor, probs = 0.025),
+    LS = quantile(Predictor, probs = 0.975),
+    Prob_vitoria_1o_turno = mean(Predictor > 0.5)
   )
