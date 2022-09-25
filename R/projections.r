@@ -227,38 +227,61 @@ Election.BNI <- map(.x = teste, .f = function(x) x$latent[pred.id,][MM] %>% invl
 pred.cand <- bind_rows(pred.Lula, pred.Bolsonaro, pred.Ciro, 
                        pred.Tebet, pred.Outros, pred.BNI)
 
-gg.0 +
-  geom_line(data = pred.cand %>% 
-              mutate(
-                Data = ymd(Data),
-                `0.5quant` = `0.5quant` * 100
-              ), 
-            mapping = aes(x = Data, y = `0.5quant`, color = Candidato)) +
-  geom_ribbon(data = pred.cand %>% 
-              mutate(
-                Data = ymd(Data),
-                `0.5quant` = `0.5quant` * 100,
-                `0.025quant` = `0.025quant` * 100,
-                `0.975quant` = `0.975quant` * 100
-              ), 
-            mapping = aes(x = Data, y = `0.5quant`, 
-                          ymin = `0.025quant`,
-                          ymax = `0.975quant`,
+
+pred.cand.1 <-pred.cand %>% 
+  mutate(
+    Data = ymd(Data),
+    Mediana = `0.5quant` * 100,
+    LI = `0.025quant` * 100,
+    LS = `0.975quant` * 100
+  ) %>% 
+  # Removendo duplicatas nas datas
+  group_by(Data, Candidato) %>% 
+  summarise(
+    Mediana = Mediana[1],
+    LI = LI[1],
+    LS = LS[1]
+  ) %>% ungroup()
+
+
+
+gg.1 <- gg.0 +
+  geom_line(data = pred.cand.1, 
+            mapping = aes(x = Data, y = Mediana, color = Candidato)) +
+  geom_ribbon(data = pred.cand.1, 
+            mapping = aes(x = Data, y = Mediana, 
+                          ymin = LI,
+                          ymax = LS,
                           fill = Candidato), 
             color = NA, alpha = .25) +
+  geom_hline( yintercept = 50, linetype = "dashed") +
+  scale_y_continuous( breaks = (0:5) * 10 ) +
+  scale_x_date( date_breaks = "2 months",  ) +
+  scale_fill_manual(values = c("red", "gold", "blue", "green", "lightgrey", "darkgrey")) +
+  scale_color_manual(values = c("red", "gold", "blue", "green", "lightgrey", "darkgrey")) +
+  theme_bw(base_size = 16) +
   labs(
-    y = "Proporção de eleitores"
-  )
+    x = "Data (yyyy-mm-dd)",
+    y = "Proporção de votos (%)",
+    title = "" , # (2/Out/2022)",
+    caption = "Modelo proposto por @leosbastos"
+  ) 
+
+gg.1
+ggsave(plot = gg.1, filename = "figs/projecoes.png", device = "png")
+
+
 
 
 Election.cand <- bind_rows(Election.Lula, Election.Bolsonaro, Election.Ciro, 
-                           Election.Tebet, Election.Outros, Election.BNI) %>% 
-  add_column(Seq = rep(1:M,6)) %>% 
+                           Election.Tebet, Election.Outros) %>% #, Election.BNI) %>% 
+  add_column(Seq = rep(1:M,5)) %>% 
+  # add_column(Seq = rep(1:M,6)) %>% 
   mutate(
     Candidato = factor(Candidato, 
                        levels = c("Lula", "Bolsonaro",
                                   "Ciro", "Tebet", 
-                                  "Outros", "BNI"),
+                                  "Outros"), #, "BNI"),
                        ordered = T)
   ) 
 
@@ -268,20 +291,49 @@ Election.cand.validos <- Election.cand %>%
   group_by(Seq) %>% 
   mutate(
     Predictor = Predictor / sum(Predictor)
-  ) %>% ungroup() %>%
-  filter(Candidato != "BNI") %>% 
-  group_by(Seq) %>% 
-  mutate(
-    Predictor2 = Predictor / sum(Predictor)
-  ) %>% ungroup() 
+  ) %>% 
+  # ungroup() %>%
+  # filter(Candidato != "BNI") %>% 
+  # group_by(Seq) %>% 
+  # mutate(
+  #   Predictor2 = Predictor / sum(Predictor)
+  # ) %>% 
+  ungroup() 
 
-Election.cand.validos %>%
-  ggplot(aes(x = Predictor, fill = Candidato, color=Candidato) ) +
-  geom_density(alpha = 0.3) + 
-  geom_vline(xintercept = 0.5, linetype = "dashed") + 
-  theme_bw() 
+gg.dens <- Election.cand.validos %>%
+  ggplot(aes(x = Predictor*100, fill = Candidato, color=Candidato) ) +
+  geom_density(alpha = 0.5) + 
+  geom_vline(xintercept = 50, linetype = "dashed") + 
+  scale_fill_manual(values = c("red", "gold", "blue", "green", "lightgrey", "darkgrey")) +
+  scale_color_manual(values = c("red", "gold", "blue", "green", "lightgrey", "darkgrey")) +
+  theme_bw(base_size = 16) +
+  labs(
+    y = "Densidade",
+    x = "Proporção de votos válidos (%)",
+    title = "Densidade da proporção de votos válidos no dia da eleição" , # (2/Out/2022)",
+    caption = "Modelo proposto por @leosbastos"
+  ) 
 
-  
+gg.dens
+ggsave(plot = gg.dens, filename = "figs/density.png", device = "png")
+
+gg.violin <- Election.cand.validos %>%
+  ggplot(aes(y = Predictor*100, x = Candidato, fill=Candidato) ) +
+  geom_violin(alpha = 0.8, show.legend = F) + 
+  geom_hline(yintercept = 50, linetype = "dashed") + 
+  theme_bw(base_size = 16) +
+  scale_fill_manual(values = c("red", "gold", "blue", "green", "lightgrey", "darkgrey")) +
+  scale_color_manual(values = c("red", "gold", "blue", "green", "lightgrey", "darkgrey")) +
+  labs(
+    x = "Candidatos",
+    y = "Proporção de votos válidos (%)",
+    title = "Projeção de votos válidos para o 1o turno no dia da eleição" , # (2/Out/2022)",
+    caption = "Modelo proposto por @leosbastos"
+  ) 
+
+gg.violin
+ggsave(plot = gg.violin, filename = "figs/violin.png", device = "png")
+
   
 Election.cand.validos %>%
   group_by(Candidato) %>% 
