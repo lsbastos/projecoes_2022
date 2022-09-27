@@ -34,7 +34,7 @@ Candidato   Prop     LI     LS Prob_vitoria_1o_turno
 
 ## Descrição do método
 
-O modelo proposto utiliza as estimativas para a proporção de votos de cada candidato como desfecho ou variável resposta, e prevê para cada candidato co serão os próximos dias até a data da eleição.
+O modelo proposto utiliza as estimativas para a proporção de votos de cada candidato como desfecho ou variável resposta, e prevê para cada candidato como serão os próximos dias até a data da eleição.
 
 O modelo estatístico escolhido foi um modelo dinâmico de crescimento linear considerando dados diários e uma transformação logística para as proporções. Seja $P_{k,t}$ a proporção de votos para o candidato $k$ no dia $t$ do insttuto $i$. 
 $$Y_{k,t,i} = \log\left(\frac{P_{k,t,i}}{1-P_{k,t,i}}\right) \sim Normal( \mu_{k,t,i}, \sigma_k^2)$$
@@ -64,10 +64,10 @@ Os códigos estão disponíveis [aqui](R/projections.r).
 Existem muitas limitações, algumas delas:
 
 * O modelo não considera a abstenção que nas últimas eleições ficou acima de 20%.
-* Não assume nenhuma mudança de cenário, apenas acompanha a tendencia de crescimento (linear) mais recente.
-* Uso de modelos gaussianos em transfrmações dos dados poderia ser aprimorado usando por exemplo a distribuição Dirichet. Isso é importante pois como no formato atual cada candidato é tratado separadamente, teoricamente é possível que a soma das proporções passe de 100%. No passo de Monte Carlo (isso é corrigido ao remover a categoria BNI e recalcular as proporções).
+* Não assume nenhuma mudança de cenário, apenas acompanha a tendência de crescimento (linear) mais recente.
+* Uso de modelos gaussianos em transformações dos dados poderia ser aprimorado usando por exemplo a distribuição Dirichet. Isso é importante pois como no formato atual cada candidato é tratado separadamente, teoricamente é possível que a soma das proporções passe de 100%. No passo de Monte Carlo isso é corrigido ao remover a categoria BNI e recalcular as proporções.
 * Todos institutos de pesquisas tiveram o mesmo peso.
-* Certamente exstem outras, postarei aqui se lembrar de outra.
+* Certamente existem outras, postarei aqui se lembrar de outra.
 
 [id1]: figs/projecoes.png ""
 [id2]: figs/density.png ""
