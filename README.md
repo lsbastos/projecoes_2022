@@ -2,7 +2,8 @@
 
 Projeções para o resultado das eleições de 2022 para prsidente da republica usando resultados de pesquisas eleitorais disponibilizados no [GitHub do Jornal Nexo](https://github.com/Nexo-Dados/pesquisas-presidenciais-2022/). A ideia dessa modelagem surgiu a partir de um [Tweet](https://twitter.com/gzanlorenssi/status/1573083879879090176) do [Gabriel Lorenssi](https://twitter.com/gzanlorenssi) e do meu interesse em acompanhar das pesquisas agregado os resultados e prevendo até o dia da eleição.
 
-Vou considerar apenas os institutos considerados neutros segundo o site [Poolidata](http://pollingdata.com.br/) que se baseia na avaliação do governo. Institutos que se distanciam demais da média dos demais institutos.
+Vou considerar apenas os institutos considerados neutros segundo o site [Poolidata](http://pollingdata.com.br/) que se baseia na avaliação do governo. Institutos que se distanciam demais da média dos demais institutos sao cnsiderads favoráveis ou desfavoráveis ao governo. Usei apenas os classificados como neutros (Ipec, Datafolha, Real Time Big Data, Sensus,
+FSB, Quaest e Ideia Big Data).
 
 ## Resultados
 
@@ -37,11 +38,11 @@ O modelo proposto utiliza as estimativas para a proporção de votos de cada can
 
 O modelo estatístico escolhido foi um modelo dinâmico de crescimento linear considerando dados diários e uma transformação logística para as proporções. Seja $P_{k,t}$ a proporção de votos para o candidato $k$ no dia $t$ do insttuto $i$. 
 $$Y_{k,t,i} = \log\left(\frac{P_{k,t,i}}{1-P_{k,t,i}}\right) \sim Normal( \mu_{k,t,i}, \sigma_k^2)$$
-onde $\forall k$ assumimos que a méda de $Y_{k,t,i}$ assume um valor médio para cada candidato, e comum no tempo e entre institutos, adicionado por dois efeitos aleatórios. Um não estruturado para capturar a heterogenedade cada instituto, e outro, agora estrutura, para descrever e incluir a dependência temporal entre estimaivas.
+onde $\forall k$ assumimos que a méda de $Y_{k,t,i}$ assume um valor médio para cada candidato, e comum no tempo e entre institutos, adicionado por dois efeitos aleatórios. Um não estruturado para capturar a heterogenedade cada instituto, e outro, agora estrutura, para descrever e incluir a dependência temporal entre estimativas.
 $$\mu_{k,t,i} = \mu_k + \alpha_{k,t} + \beta_{k,i},$$
 $$\mu_{k} \sim N(0, V \to \infty),$$
-$$\alpha_{k,t} \sim AR(2, \tau^2_\alpha), \quad , \qiad \tau_\alpha^2>0,$$
-$$\beta_{k,i} \sim Normal(0, \tau^2_\beta\), \qiad \tau_\beta^2>0, $$
+$$\alpha_{k,t} \sim AR(2, \tau^2_\alpha), \quad , \quad \tau_\alpha^2>0,$$
+$$\beta_{k,i} \sim Normal(0, \tau^2_\beta\), \quad \tau_\beta^2>0, $$
 
 O modelo se completa com distribuições a priori para os parâmetros. Foram utilizadas prioris vagas, isto é, pouco informativas e default do pacote INLA (https://www.r-inla.org/).
 

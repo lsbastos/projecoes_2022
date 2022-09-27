@@ -377,7 +377,9 @@ prevendo até o dia da eleição.</p>
 <p>Vou considerar apenas os institutos considerados neutros segundo o
 site <a href="http://pollingdata.com.br/">Poolidata</a> que se baseia na
 avaliação do governo. Institutos que se distanciam demais da média dos
-demais institutos.</p>
+demais institutos sao cnsiderads favoráveis ou desfavoráveis ao governo.
+Usei apenas os classificados como neutros (Ipec, Datafolha, Real Time
+Big Data, Sensus, FSB, Quaest e Ideia Big Data).</p>
 <div id="resultados" class="section level2">
 <h2>Resultados</h2>
 <div id="densidade-da-proporção-de-votos-válidos-para-cada-candidato-no-dia-da-eleição" class="section level3">
@@ -420,10 +422,10 @@ proporção de votos para o candidato <span class="math inline">\(k\)</span> no 
 candidato, e comum no tempo e entre institutos, adicionado por dois
 efeitos aleatórios. Um não estruturado para capturar a heterogenedade
 cada instituto, e outro, agora estrutura, para descrever e incluir a
-dependência temporal entre estimaivas. <span class="math display">\[\mu_{k,t,i} = \mu_k + \alpha_{k,t} +
+dependência temporal entre estimativas. <span class="math display">\[\mu_{k,t,i} = \mu_k + \alpha_{k,t} +
 \beta_{k,i},\]</span> <span class="math display">\[\mu_{k} \sim N(0, V
 \to \infty),\]</span> <span class="math display">\[\alpha_{k,t} \sim
-AR(2, \tau^2_\alpha), \quad , \qiad \tau_\alpha^2&gt;0,\]</span> <span class="math display">\[\beta_{k,i} \sim Normal(0, \tau^2_\beta\), \qiad
+AR(2, \tau^2_\alpha), \quad , \quad \tau_\alpha^2&gt;0,\]</span> <span class="math display">\[\beta_{k,i} \sim Normal(0, \tau^2_\beta\), \quad
 \tau_\beta^2&gt;0, \]</span></p>
 <p>O modelo se completa com distribuições a priori para os parâmetros.
 Foram utilizadas prioris vagas, isto é, pouco informativas e default do
