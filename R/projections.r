@@ -3,13 +3,15 @@
 library(tidyverse)
 library(lubridate)
 library(arm)
+# INLA nao está no CRAN do R
+# Para instala-lo entre em
+# https://www.r-inla.org/download-install
 library(INLA)
 
 raw.csv <- "https://raw.githubusercontent.com/Nexo-Dados/pesquisas-presidenciais-2022/main/pesquisas_1t.csv"
 
 dados <- read_csv(file = raw.csv)
 
-library(INLA)
 
 data.ini <- min(dados$Data, na.rm = T)
 data.last <- max(dados$Data, na.rm = T) 
@@ -19,9 +21,10 @@ data.fim <- ymd("2022-10-02")
 # com NA no valor das proporcoes de cada candidato
 # pois isso será usado na revisao
 dados.div <- dados %>% 
-  # Usando apenas as pesquisas a partir de 1/8/2022
-  # # filter(!is.na(`Data divulgação`)) %>% 
-  # filter(`Data divulgação`>= "2022-08-01") %>% 
+  # Usando apenas as pesquisas a partir de 1/6/2022
+  # filter(`Data divulgação`>= "2022-06-01") %>%
+  filter(Instituto %in% c("Ipec", "Datafolha", "Real Time Big Data", "Sensus",
+                          "FSB", "Quaest", "Ideia Big Data" )) %>%
   bind_rows(
     tibble(Data = seq(from = data.last+1, to = data.fim, by = "day"))
   ) %>% 
@@ -53,9 +56,9 @@ gg.0 <- dados.div %>%
   geom_point() +
   theme_bw()
 
-# gg.0
+# gg.0 + geom_smooth()
 
-
+# dados.div %>% group_by(Instituto) %>% tally()
 
 dados.inla <- dados.div %>% 
   # select(Time, Data, Lula:BNI) %>% 
@@ -69,7 +72,9 @@ MM <- length(pred.id)
 
 M = 1000
 
-formula <- Y ~ 1 + f(Time, model = "rw2")
+# formula <- Y ~ 1 + f(Time, model = "rw2") 
+formula <- Y ~ 1 + f(Time, model = "rw2")  + f(Instituto, model = "iid")
+
 
 
 # Lula
@@ -77,11 +82,12 @@ formula <- Y ~ 1 + f(Time, model = "rw2")
 m.Lula <- inla(formula, family = "gaussian", 
                data = dados.inla %>% 
                  mutate(
-                   Y = Lula
+                   Y = Lula,
                  ), 
                control.predictor = list( compute = T),
-               control.compute = list(config = TRUE))
+               control.compute = list(config = TRUE, waic = T))
 
+# m.Lula$waic$waic
 
 pred.Lula <- m.Lula$summary.linear.predictor[ , c(4,3,5)] %>% 
   invlogit() %>% 
@@ -89,9 +95,9 @@ pred.Lula <- m.Lula$summary.linear.predictor[ , c(4,3,5)] %>%
     Data = dados.div$Data, 
     Candidato = "Lula" )
 
-teste <- inla.posterior.sample(m.Lula, n = M)
+post.samp <- inla.posterior.sample(m.Lula, n = M)
 
-Election.Lula <- map(.x = teste, .f = function(x) x$latent[pred.id,][MM] %>% invlogit()) %>% 
+Election.Lula <- map(.x = post.samp, .f = function(x) x$latent[pred.id,][MM] %>% invlogit()) %>% 
   bind_rows() %>%  
   bind_cols(
     Candidato = "Lula" )
@@ -306,11 +312,14 @@ gg.dens <- Election.cand.validos %>%
   geom_vline(xintercept = 50, linetype = "dashed") + 
   scale_fill_manual(values = c("red", "gold", "blue", "green", "lightgrey", "darkgrey")) +
   scale_color_manual(values = c("red", "gold", "blue", "green", "lightgrey", "darkgrey")) +
+  # scale_fill_manual(values = c("red", "#7B5804", "blue", "green", "lightgrey", "darkgrey")) +
+  # scale_color_manual(values = c("red", "#7B5804", "blue", "green", "lightgrey", "darkgrey")) +
   theme_bw(base_size = 16) +
   labs(
     y = "Densidade",
     x = "Proporção de votos válidos (%)",
     title = "Densidade da proporção de votos válidos no dia da eleição" , # (2/Out/2022)",
+    subtitle = paste("Ultima pesquisa:",data.last),
     caption = "Modelo proposto por @leosbastos"
   ) 
 
@@ -323,7 +332,7 @@ gg.violin <- Election.cand.validos %>%
   geom_hline(yintercept = 50, linetype = "dashed") + 
   theme_bw(base_size = 16) +
   scale_fill_manual(values = c("red", "gold", "blue", "green", "lightgrey", "darkgrey")) +
-  scale_color_manual(values = c("red", "gold", "blue", "green", "lightgrey", "darkgrey")) +
+  scale_color_manual(values = c("red",  "gold" , "blue", "green", "lightgrey", "darkgrey")) +
   labs(
     x = "Candidatos",
     y = "Proporção de votos válidos (%)",
@@ -343,3 +352,4 @@ Election.cand.validos %>%
     LS = quantile(Predictor, probs = 0.975),
     Prob_vitoria_1o_turno = mean(Predictor > 0.5)
   )
+
