@@ -18,13 +18,14 @@ FSB, Quaest e Ideia Big Data).
 ### Estimativas para o dia da eleição
 
 ```
-Candidato   Prop     LI     LS Prob_vitoria_1o_turno
+# A tibble: 5 × 5
+  Candidato   Prop     LI     LS Prob_vitoria_1o_turno
   <ord>      <dbl>  <dbl>  <dbl>                 <dbl>
-1 Lula      0.505  0.473  0.537                  0.641
-2 Bolsonaro 0.355  0.328  0.385                  0    
-3 Ciro      0.0633 0.0490 0.0798                 0    
-4 Tebet     0.0553 0.0350 0.0798                 0    
-5 Outros    0.0194 0.0116 0.0335                 0     
+1 Lula      0.485  0.464  0.503                  0.052
+2 Bolsonaro 0.380  0.364  0.399                  0    
+3 Ciro      0.0614 0.0540 0.0702                 0    
+4 Tebet     0.0540 0.0429 0.0667                 0    
+5 Outros    0.0187 0.0138 0.0254                 0         
 ```
 
 ### Projeções para a proporção de votos em cada candidato até o dia da eleição do primeiro turno.
